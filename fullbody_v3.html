@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Body Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080810;--surface:#0f0f1a;--card:#13131f;--border:#1c1c2e;--border2:#252538;--a:#ff4d6d;--b:#ffd166;--c:#7bed9f;--text:#e8e8f2;--muted:#5a5a78;--muted2:#8888aa;--accent:#fff;--success:#7bed9f;--warn:#ffd166;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding-bottom:120px;}
+.hero{padding:40px 20px 20px;text-align:center;position:relative;overflow:hidden;}
+.hero-glow{position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:500px;height:300px;background:radial-gradient(ellipse,rgba(255,77,109,0.1) 0%,transparent 70%);pointer-events:none;}
+.hero-badge{display:inline-block;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted2);margin-bottom:12px;padding:4px 14px;border:1px solid var(--border2);border-radius:20px;}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,12vw,82px);line-height:.88;letter-spacing:3px;background:linear-gradient(135deg,#ff4d6d 0%,#ffd166 50%,#7bed9f 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+.hero-sub{font-size:12px;color:var(--muted2);}
+.tabs-wrap{position:sticky;top:0;z-index:200;background:rgba(8,8,16,0.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.tabs{display:flex;}
+.tab{flex:1;padding:12px 4px;border:none;background:transparent;color:var(--muted2);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;text-align:center;border-bottom:2px solid transparent;transition:all .2s;}
+.tab.ta.active{color:var(--a);border-bottom-color:var(--a);}
+.tab.tb.active{color:var(--b);border-bottom-color:var(--b);}
+.tab.tc.active{color:var(--c);border-bottom-color:var(--c);}
+.tab.td.active{color:#c77dff;border-bottom-color:#c77dff;}
+.session{display:none;padding:0 14px;}.session.active{display:block;}
+.session-header{padding:16px 0 10px;display:flex;align-items:center;gap:12px;}
+.session-letter{font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;}
+.sa .session-letter{color:var(--a);}.sb .session-letter{color:var(--b);}.sc .session-letter{color:var(--c);}
+.smeta-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--accent);}
+.smeta-sub{font-size:11px;color:var(--muted2);margin-top:2px;}
+.intensity-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:600;}
+.sa .intensity-bar{background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);color:#ff4d6d;}
+.sb .intensity-bar{background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.3);color:#ffd166;}
+.sc .intensity-bar{background:rgba(123,237,159,0.1);border:1px solid rgba(123,237,159,0.3);color:#7bed9f;}
+.tip-box{background:rgba(255,255,255,0.025);border:1px solid var(--border2);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:16px;}
+.tip-box strong{color:var(--text);}
+.muscle-group{margin-bottom:18px;}
+.group-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.group-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.ex-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;}
+.ex-top{display:flex;}
+.ex-img{width:72px;min-height:65px;flex-shrink:0;background:#0a0a16;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.ex-info{flex:1;padding:9px 11px 7px;}
+.ex-name{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--accent);margin-bottom:4px;line-height:1.2;}
+.bf{display:inline-block;font-size:9px;padding:2px 6px;border-radius:5px;background:rgba(255,77,109,0.15);color:#ff4d6d;font-weight:700;margin-left:4px;vertical-align:middle;}
+.bh{display:inline-block;font-size:9px;padding:2px 6px;border-radius:5px;background:rgba(255,209,102,0.15);color:#ffd166;font-weight:700;margin-left:4px;vertical-align:middle;}
+.bi{display:inline-block;font-size:9px;padding:2px 6px;border-radius:5px;background:rgba(123,237,159,0.15);color:#7bed9f;font-weight:700;margin-left:4px;vertical-align:middle;}
+.ex-target{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,0.07);color:var(--muted2);}
+.ex-note{padding:5px 11px;font-size:11px;color:var(--muted2);border-top:1px solid var(--border);font-style:italic;}
+.sets-table{border-top:1px solid var(--border);}
+.sets-header{display:grid;grid-template-columns:28px 1fr 1fr 1fr;gap:4px;padding:5px 10px;background:rgba(255,255,255,0.02);}
+.sets-header span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;text-align:center;}
+.sets-header span:first-child{text-align:left;}
+.set-block{border-top:1px solid var(--border);padding:6px 10px 8px;}
+.set-top{display:grid;grid-template-columns:28px 1fr 1fr 1fr;gap:4px;align-items:center;margin-bottom:7px;}
+.snum{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--muted2);}
+.stv{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--text);text-align:center;}
+.inp{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'Bebas Neue',sans-serif;font-size:15px;text-align:center;padding:5px 3px;outline:none;-moz-appearance:textfield;}
+.inp::-webkit-outer-spin-button,.inp::-webkit-inner-spin-button{-webkit-appearance:none;}
+.inp:focus{border-color:var(--muted2);}
+.inp.saved{border-color:var(--success);background:rgba(123,237,159,0.07);}
+.set-bottom{display:flex;gap:7px;}
+.rest-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px 6px;background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.25);border-radius:8px;color:var(--warn);font-size:12px;font-weight:600;cursor:pointer;}
+.rest-btn.done{background:rgba(123,237,159,0.1);border-color:var(--success);color:var(--success);}
+.feel-sel{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:7px 3px;outline:none;cursor:pointer;}
+.save-btn{width:100%;padding:13px;margin-top:12px;border-radius:11px;border:none;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;cursor:pointer;}
+.sa .save-btn{background:var(--a);color:#fff;}.sb .save-btn{background:var(--b);color:#0a0a16;}.sc .save-btn{background:var(--c);color:#0a0a16;}
+.next-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:15px;margin-top:14px;margin-bottom:8px;}
+.next-box-title{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-bottom:10px;}
+.nrow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border);}
+.nname{font-size:12px;color:var(--text);flex:1;}
+.nprog{display:flex;align-items:center;gap:6px;}
+.nold{font-size:11px;color:var(--muted2);}
+.nnew{font-family:'Bebas Neue',sans-serif;font-size:16px;padding:2px 10px;border-radius:6px;}
+.nnew.up{background:rgba(123,237,159,0.15);color:var(--success);}
+.nnew.same{background:rgba(255,255,255,0.06);color:var(--muted2);}
+.nnew.down{background:rgba(255,77,109,0.13);color:#ff4d6d;}
+.pnote{font-size:11px;color:var(--muted2);margin-top:8px;font-style:italic;}
+.hist-toggle{width:100%;padding:9px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted2);font-size:12px;cursor:pointer;margin-bottom:8px;margin-top:4px;}
+.hist-list{display:none;}.hist-list.open{display:block;}
+.hist-entry{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 11px;margin-bottom:6px;font-size:11px;color:var(--muted2);line-height:1.7;}
+.hist-entry strong{color:var(--text);font-size:12px;}
+.export-btn{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--muted2);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;}
+#rest-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(8,8,16,0.96);backdrop-filter:blur(20px);flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+#rest-overlay.show{display:flex;}
+.rlbl{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted2);}
+.rexname{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent);text-align:center;padding:0 24px;}
+.circle-wrap{position:relative;width:190px;height:190px;}
+.csvg{transform:rotate(-90deg);}
+.rtime{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:var(--accent);}
+.rtime.warn{color:var(--warn);}.rtime.go{color:var(--success);}
+.rdurrow{display:flex;gap:7px;align-items:center;}
+.dbtn{padding:6px 13px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted2);font-size:12px;cursor:pointer;}
+.dbtn.active{border-color:var(--warn);color:var(--warn);background:rgba(255,209,102,0.08);}
+.rctrls{display:flex;gap:10px;}
+.rctrl{padding:10px 20px;border-radius:10px;border:1px solid var(--border2);background:var(--card);color:var(--text);font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;}
+.rctrl.skip{background:#ff4d6d;border-color:#ff4d6d;color:#fff;}
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--success);color:#0a0a16;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;padding:11px 26px;border-radius:30px;pointer-events:none;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;z-index:999;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+.dash-section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.dash-title{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--muted2);text-transform:uppercase;margin-bottom:4px;}
+.dash-sub{font-size:11px;color:var(--muted);margin-bottom:12px;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 11px;}
+.kpi-val{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;}
+.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+.exsel{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:12px;padding:7px 10px;outline:none;margin-bottom:12px;cursor:pointer;}
+.bar-wrap{display:flex;align-items:flex-end;gap:5px;height:100px;margin-top:8px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:4px 4px 0 0;min-height:3px;transition:height .3s;}
+.blbl{font-size:8px;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;}
+.bval{font-family:'Bebas Neue',sans-serif;font-size:10px;color:var(--muted2);}
+.pr-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--border);}
+.pr-name{font-size:12px;color:var(--text);}
+.pr-val{font-family:'Bebas Neue',sans-serif;font-size:18px;color:#c77dff;}
+.trend-up{color:var(--success);font-size:11px;font-weight:700;}
+.trend-down{color:#ff4d6d;font-size:11px;font-weight:700;}
+.trend-same{color:var(--muted2);font-size:11px;}
+.streak-badge{display:inline-block;background:rgba(199,125,255,0.15);color:#c77dff;border:1px solid rgba(199,125,255,0.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;margin-left:6px;}
+</style>
+</head>
+<body>
+<div id="toast">✓ Séance sauvegardée !</div>
+<div id="rest-overlay">
+  <div class="rlbl">Temps de repos</div>
+  <div class="rexname" id="rel">—</div>
+  <div class="circle-wrap">
+    <svg class="csvg" viewBox="0 0 190 190" width="190" height="190">
+      <circle fill="none" stroke="#252538" stroke-width="8" cx="95" cy="95" r="83"/>
+      <circle id="cp" fill="none" stroke="#ffd166" stroke-width="8" stroke-linecap="round" cx="95" cy="95" r="83" stroke-dasharray="522" stroke-dashoffset="0" style="transition:stroke-dashoffset .95s linear,stroke .3s"/>
+    </svg>
+    <div class="rtime" id="rtd">—</div>
+  </div>
+  <div class="rdurrow">
+    <span style="font-size:11px;color:var(--muted)">Durée :</span>
+    <button class="dbtn" onclick="setDur(60,this)">1:00</button>
+    <button class="dbtn" onclick="setDur(90,this)">1:30</button>
+    <button class="dbtn active" onclick="setDur(120,this)">2:00</button>
+    <button class="dbtn" onclick="setDur(180,this)">3:00</button>
+  </div>
+  <div class="rctrls">
+    <button class="rctrl" id="pbtn" onclick="togglePause()">⏸ Pause</button>
+    <button class="rctrl skip" onclick="closeRest()">✓ Terminé</button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">Périodisation Ondulatoire · Science · 3x/semaine</div>
+  <div class="hero-title">FULL<br>BODY</div>
+  <div class="hero-sub">Force · Définition · Progression automatique</div>
+</div>
+
+<div class="tabs-wrap"><div class="tabs">
+  <div class="tab ta active" onclick="showTab('sa')">🔴 LOURD</div>
+  <div class="tab tb" onclick="showTab('sb')">🟡 MOYEN</div>
+  <div class="tab tc" onclick="showTab('sc')">🟢 LÉGER</div>
+  <div class="tab td" onclick="showTab('stats')">📈 STATS</div>
+</div></div>
+
+<!-- SÉANCE A — LOURD -->
+<div id="sa" class="session sa active">
+  <div class="session-header"><div class="session-letter">A</div><div><div class="smeta-title">SÉANCE A — LOURD</div><div class="smeta-sub">Mercredi · Force pure · 3-5 reps</div></div></div>
+  <div class="intensity-bar">🔴 INTENSITÉ HAUTE — Charges maximales, repos 3 min</div>
+  <div class="tip-box"><strong>Objectif :</strong> Soulever aussi lourd que possible avec une technique parfaite. C'est cette séance qui construit ta force brute. Repos 3 min entre les séries de force.</div>
+
+  <div class="muscle-group"><div class="group-title">🏋️ Composés — Force</div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🏋️</div><div class="ex-info"><div class="ex-name">Développé Couché Barre <span class="bf">FORCE</span></div><span class="ex-target">85-90% de ta max</span></div></div>
+    <div class="ex-note">Descente 3s contrôlée, poussée explosive. Prise légèrement + large que les épaules. Coudes à 45-75° par rapport au corps — jamais à 90°. Pieds bien à plat, fessiers collés au banc. Cet exercice est ton indicateur de force principal : c'est ici que tu mesures ta progression semaine après semaine.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">5</div><input class="inp" type="number" placeholder="—" data-ex="a-0" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="65" data-ex="a-0" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Bench S1',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-0" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">4</div><input class="inp" type="number" placeholder="—" data-ex="a-0" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="65" data-ex="a-0" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Bench S2',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-0" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">3</div><input class="inp" type="number" placeholder="—" data-ex="a-0" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="65" data-ex="a-0" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Bench S3',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-0" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🧗</div><div class="ex-info"><div class="ex-name">Pull Ups Lestés <span class="bf">FORCE</span></div><span class="ex-target">+5 à +10 kg</span></div></div>
+    <div class="ex-note">Si tu peux, ajoute une ceinture lestée. Sinon poids du corps suffit. Descente ultra lente 4s — c'est là que le muscle travaille le plus. Prise légèrement + large que les épaules, coudes pas complètement verrouillés en haut. Amplitude complète : bras quasi tendus en bas, menton au-dessus de la barre en haut.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">5</div><input class="inp" type="number" placeholder="—" data-ex="a-1" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="5" data-ex="a-1" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Pull Ups S1',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-1" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">4</div><input class="inp" type="number" placeholder="—" data-ex="a-1" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="5" data-ex="a-1" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Pull Ups S2',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-1" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">3</div><input class="inp" type="number" placeholder="—" data-ex="a-1" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="5" data-ex="a-1" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Pull Ups S3',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-1" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🏋️</div><div class="ex-info"><div class="ex-name">Squat Barre <span class="bf">FORCE</span></div><span class="ex-target">85% de ta max</span></div></div>
+    <div class="ex-note">Barre sur le haut du dos (pas sur le cou). Descente jusqu'à la parallèle minimum — cuisses parallèles au sol. Genoux dans l'axe des orteils, ne les laisse pas rentrer vers l'intérieur. Regarde devant toi, pas en bas. Pousse depuis les talons. Le squat lourd en séance A est ton deuxième indicateur de force clé.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">5</div><input class="inp" type="number" placeholder="—" data-ex="a-2" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="60" data-ex="a-2" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Squat S1',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-2" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">4</div><input class="inp" type="number" placeholder="—" data-ex="a-2" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="60" data-ex="a-2" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Squat S2',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-2" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">3</div><input class="inp" type="number" placeholder="—" data-ex="a-2" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="60" data-ex="a-2" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(180,'Squat S3',this)">⏱ 3:00</button><select class="feel-sel" data-ex="a-2" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+  </div>
+  <div class="muscle-group"><div class="group-title">🎯 Isolation — Triceps &amp; Épaules</div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">⬇️</div><div class="ex-info"><div class="ex-name">Corde Triceps Poulie <span class="bi">ISO</span></div><span class="ex-target">15-20 kg</span></div></div>
+    <div class="ex-note">Coudes légèrement fléchis, bras collés au corps. Tire vers le bas avec les triceps, pas avec les épaules. Sépare bien les deux poignées en bas pour maximiser la contraction. Maintiens 1 seconde en bas avant de remonter lentement. Finisher triceps — la brûlure doit être intense.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="a-3" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="a-3" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Corde S1',this)">⏱ 1:30</button><select class="feel-sel" data-ex="a-3" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="a-3" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="a-3" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Corde S2',this)">⏱ 1:30</button><select class="feel-sel" data-ex="a-3" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">8</div><input class="inp" type="number" placeholder="—" data-ex="a-3" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="a-3" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Corde S3',this)">⏱ 1:30</button><select class="feel-sel" data-ex="a-3" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">↔️</div><div class="ex-info"><div class="ex-name">Élévations Latérales <span class="bi">ISO</span></div><span class="ex-target">6-8 kg/hal</span></div></div>
+    <div class="ex-note">Lève les bras sur les côtés jusqu'à hauteur des épaules — pas plus haut. Pouces légèrement orientés vers le bas comme si tu versais un verre. Pas de balancement du corps, pas d'élan. Si tu dois te balancer c'est que c'est trop lourd. Cet exercice donne la largeur des épaules — c'est lui qui crée la forme en V.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="a-4" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="6" data-ex="a-4" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Latérales S1',this)">⏱ 1:00</button><select class="feel-sel" data-ex="a-4" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="a-4" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="6" data-ex="a-4" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Latérales S2',this)">⏱ 1:00</button><select class="feel-sel" data-ex="a-4" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="a-4" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="6" data-ex="a-4" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Latérales S3',this)">⏱ 1:00</button><select class="feel-sel" data-ex="a-4" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+  </div>
+  <button class="save-btn" onclick="saveSession('a')">💾 SAUVEGARDER SÉANCE A</button>
+  <div id="next-a" class="next-box" style="display:none"></div>
+  <button class="hist-toggle" onclick="toggleHist('a')">📋 Historique Séance A</button>
+  <div id="hist-a" class="hist-list"></div>
+  <button class="export-btn" onclick="exportData()">📤 Exporter mes données</button>
+  <button class="export-btn" style="color:#ffd166;border-color:rgba(255,209,102,0.3);margin-top:4px" onclick="reportSession('a')">📅 Reporter Séance A</button>
+</div>
+
+<!-- SÉANCE B — MOYEN -->
+<div id="sb" class="session sb">
+  <div class="session-header"><div class="session-letter">B</div><div><div class="smeta-title">SÉANCE B — MOYEN</div><div class="smeta-sub">Vendredi · Hypertrophie · 8-10 reps</div></div></div>
+  <div class="intensity-bar">🟡 INTENSITÉ MOYENNE — 70-75% max, repos 2 min</div>
+  <div class="tip-box"><strong>Planning :</strong> 🟢 Lundi · 🔴 Mercredi · 🟡 Vendredi · 🏃 Samedi · ⚽ Dimanche<br><strong>Objectif :</strong> Même exercices qu'en A mais avec moins de charge et plus de reps. C'est la séance qui construit le volume musculaire.</div>
+
+  <div class="muscle-group"><div class="group-title">💪 Composés — Hypertrophie</div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🏋️</div><div class="ex-info"><div class="ex-name">Développé Couché Barre <span class="bh">HYPER</span></div><span class="ex-target">70% de ta max</span></div></div>
+    <div class="ex-note">Même technique qu'en séance A mais 70% de la charge. Profite du poids réduit pour aller chercher une amplitude maximale — descends plus bas, sens l'étirement de la poitrine en bas. Pause 1 seconde en bas avant de pousser. Cette séance construit le volume musculaire là où la séance A construit la force brute.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="b-0" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="50" data-ex="b-0" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'Bench S1',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-0" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="b-0" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="50" data-ex="b-0" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'Bench S2',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-0" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">8</div><input class="inp" type="number" placeholder="—" data-ex="b-0" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="50" data-ex="b-0" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'Bench S3',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-0" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🧗</div><div class="ex-info"><div class="ex-name">Pull Ups Poids du Corps <span class="bh">HYPER</span></div><span class="ex-target">Poids du corps</span></div></div>
+    <div class="ex-note">Poids du corps, pas de lest en séance B. Descente contrôlée 3s — c'est la phase excentrique qui stimule le plus la croissance musculaire. Amplitude complète : bras quasi tendus en bas. Si tu arrives facilement à 8 reps sur les 3 séries, tu es prêt à lester en séance A.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">8</div><input class="inp" type="number" placeholder="—" data-ex="b-1" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="b-1" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'Pull Ups S1',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-1" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">7</div><input class="inp" type="number" placeholder="—" data-ex="b-1" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="b-1" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'Pull Ups S2',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-1" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">6</div><input class="inp" type="number" placeholder="—" data-ex="b-1" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="b-1" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'Pull Ups S3',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-1" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🏋️</div><div class="ex-info"><div class="ex-name">RDL Barre <span class="bh">HYPER</span></div><span class="ex-target">70% de ta max</span></div></div>
+    <div class="ex-note">Barre tenue en pronation, descente le long des jambes. Dos droit et légèrement cambré — jamais arrondi. Descends jusqu'à sentir un étirement fort dans les ischio-jambiers, environ mi-tibia selon ta souplesse. Genoux légèrement fléchis tout au long. La remontée se fait en poussant les hanches vers l'avant, pas en tirant avec le dos.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="b-2" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="60" data-ex="b-2" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'RDL S1',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-2" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="b-2" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="60" data-ex="b-2" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'RDL S2',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-2" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">8</div><input class="inp" type="number" placeholder="—" data-ex="b-2" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="60" data-ex="b-2" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(120,'RDL S3',this)">⏱ 2:00</button><select class="feel-sel" data-ex="b-2" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+  </div>
+  <div class="muscle-group"><div class="group-title">🎯 Isolation — Biceps &amp; Dos</div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">💪</div><div class="ex-info"><div class="ex-name">Curls Barre EZ <span class="bi">ISO</span></div><span class="ex-target">25 kg</span></div></div>
+    <div class="ex-note">Coudes fixes contre le corps — ils ne bougent pas. Monte la barre jusqu'à ce que tes biceps soient complètement contractés, poignets en supination maximale en haut. Descente lente 3s en résistant au poids. Pas de balancement du dos. La barre EZ réduit le stress sur les poignets comparé à la barre droite.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="b-3" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="25" data-ex="b-3" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Curls S1',this)">⏱ 1:30</button><select class="feel-sel" data-ex="b-3" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="b-3" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="25" data-ex="b-3" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Curls S2',this)">⏱ 1:30</button><select class="feel-sel" data-ex="b-3" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="b-3" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="25" data-ex="b-3" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Curls S3',this)">⏱ 1:30</button><select class="feel-sel" data-ex="b-3" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🔄</div><div class="ex-info"><div class="ex-name">Cable Row V-Bar <span class="bi">ISO</span></div><span class="ex-target">35 kg</span></div></div>
+    <div class="ex-note">Assis, dos droit, légère cambrure naturelle. Tire le V-bar vers ton nombril en ouvrant les coudes vers l'arrière — imagine que tu essaies de toucher tes omoplates ensemble. Contraction forte en fin de mouvement, maintiens 1 seconde. Remontée contrôlée sans laisser le poids tirer tes épaules vers l'avant.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="b-4" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="35" data-ex="b-4" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Row S1',this)">⏱ 1:30</button><select class="feel-sel" data-ex="b-4" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="b-4" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="35" data-ex="b-4" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Row S2',this)">⏱ 1:30</button><select class="feel-sel" data-ex="b-4" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">10</div><input class="inp" type="number" placeholder="—" data-ex="b-4" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="35" data-ex="b-4" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Row S3',this)">⏱ 1:30</button><select class="feel-sel" data-ex="b-4" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+  </div>
+  <button class="save-btn" onclick="saveSession('b')">💾 SAUVEGARDER SÉANCE B</button>
+  <div id="next-b" class="next-box" style="display:none"></div>
+  <button class="hist-toggle" onclick="toggleHist('b')">📋 Historique Séance B</button>
+  <div id="hist-b" class="hist-list"></div>
+  <button class="export-btn" onclick="exportData()">📤 Exporter mes données</button>
+  <button class="export-btn" style="color:#ffd166;border-color:rgba(255,209,102,0.3);margin-top:4px" onclick="reportSession('b')">📅 Reporter Séance B</button>
+</div>
+
+<!-- SÉANCE C — LÉGER -->
+<div id="sc" class="session sc">
+  <div class="session-header"><div class="session-letter">C</div><div><div class="smeta-title">SÉANCE C — LÉGER</div><div class="smeta-sub">Lundi · Pump &amp; Définition · 12-15 reps</div></div></div>
+  <div class="intensity-bar">🟢 INTENSITÉ BASSE — 60% max, repos 1:30, brûlure maximale</div>
+  <div class="tip-box"><strong>Planning :</strong> 🟢 Lundi · 🔴 Mercredi · 🟡 Vendredi · 🏃 Samedi · ⚽ Dimanche<br><strong>Planning :</strong> 🟢 Lundi · 🔴 Mercredi · 🟡 Vendredi · 🏃 Samedi · ⚽ Dimanche<br><strong>Objectif :</strong> Même exercices, charges légères, beaucoup de reps. Pump maximum. Cette séance grave les mouvements dans ta mémoire musculaire et favorise la définition.</div>
+
+  <div class="muscle-group"><div class="group-title">🔥 Composés — Pump &amp; Définition</div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🏋️</div><div class="ex-info"><div class="ex-name">Développé Couché Barre <span class="bi">PUMP</span></div><span class="ex-target">60% de ta max</span></div></div>
+    <div class="ex-note">Séance C = technique parfaite et connexion musculaire maximale. Descente 4s ultra lente, pause 1s en bas en sentant l'étirement de la poitrine, poussée explosive. À cette charge légère tu peux vraiment te concentrer sur la qualité du mouvement — c'est ce qui grave le pattern moteur dans ton cerveau et améliore tes performances en séance A.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-0" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="40" data-ex="c-0" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Bench S1',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-0" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-0" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="40" data-ex="c-0" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Bench S2',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-0" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="c-0" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="40" data-ex="c-0" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Bench S3',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-0" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🧗</div><div class="ex-info"><div class="ex-name">Pull Ups — Max Reps <span class="bi">PUMP</span></div><span class="ex-target">Poids du corps</span></div></div>
+    <div class="ex-note">Séance C = max reps poids du corps. Descente 5s — très lente. L'objectif est d'accumuler du volume sur les dorsaux et biceps sans fatiguer le système nerveux. Note ton nombre de reps à chaque série pour suivre ta progression. Si tu dépasses 12 reps facilement sur toutes les séries, tu es largement prêt à lester en séance A.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">Max</div><input class="inp" type="number" placeholder="—" data-ex="c-1" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-1" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Pull Ups S1',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-1" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">Max</div><input class="inp" type="number" placeholder="—" data-ex="c-1" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-1" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Pull Ups S2',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-1" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">Max</div><input class="inp" type="number" placeholder="—" data-ex="c-1" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-1" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Pull Ups S3',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-1" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🏋️</div><div class="ex-info"><div class="ex-name">Squat Barre <span class="bi">PUMP</span></div><span class="ex-target">60% de ta max</span></div></div>
+    <div class="ex-note">Charge légère = technique irréprochable. Profite de ce poids réduit pour aller chercher la profondeur maximale — plus bas que la parallèle si ta mobilité le permet. Descente 4s, pause 1s en bas, remontée explosive. Concentre-toi sur la sensation dans les quadriceps à chaque rep. Cette séance améliore ta mobilité et prépare tes articulations pour le squat lourd du mercredi.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-2" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="40" data-ex="c-2" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Squat S1',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-2" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-2" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="40" data-ex="c-2" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Squat S2',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-2" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="c-2" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="40" data-ex="c-2" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(90,'Squat S3',this)">⏱ 1:30</button><select class="feel-sel" data-ex="c-2" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+  </div>
+  <div class="muscle-group"><div class="group-title">🎯 Isolation — Poitrine &amp; Épaules</div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🦅</div><div class="ex-info"><div class="ex-name">Pec Deck Fly <span class="bi">ISO</span></div><span class="ex-target">15 kg</span></div></div>
+    <div class="ex-note">Coudes légèrement fléchis tout au long — jamais tendus. Ouvre les bras lentement jusqu'à sentir un étirement profond dans la poitrine, pause 1s, puis ferme en contractant fort les pectoraux. Imagine que tu "serres" quelque chose entre tes bras. Cet exercice travaille les pectoraux sur une amplitude que le bench ne peut pas atteindre — indispensable pour la définition.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-3" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="c-3" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Fly S1',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-3" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-3" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="c-3" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Fly S2',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-3" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="c-3" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="c-3" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Fly S3',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-3" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">↔️</div><div class="ex-info"><div class="ex-name">Élévations Latérales <span class="bi">ISO</span></div><span class="ex-target">6 kg/hal</span></div></div>
+    <div class="ex-note">À cette charge légère l'objectif est la brûlure maximale des deltoïdes latéraux. 20 reps lentes et contrôlées. Pas d'élan, pas de balancement — mouvement pur. Si tes épaules ne brûlent pas dès la 10ème rep c'est que tu utilises trop d'élan. Cet exercice est le plus efficace pour créer la largeur des épaules et donner la forme en V au corps.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">20</div><input class="inp" type="number" placeholder="—" data-ex="c-4" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="6" data-ex="c-4" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Latérales S1',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-4" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-4" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="6" data-ex="c-4" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Latérales S2',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-4" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-4" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="6" data-ex="c-4" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Latérales S3',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-4" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+  </div>
+  <div class="muscle-group"><div class="group-title">💥 Abdos — Finisher</div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">💥</div><div class="ex-info"><div class="ex-name">Crunch Cable Poulie <span class="bi">ISO</span></div><span class="ex-target">15 kg</span></div></div>
+    <div class="ex-note">À genoux face à la poulie haute, corde derrière la tête. Flex vers le bas en contractant uniquement les abdos — les hanches ne bougent pas. Expire fort en bas pour maximiser la contraction. Maintiens 1s en bas. Remontée contrôlée. Cet exercice est supérieur aux crunchs au sol car il permet d'ajouter de la charge et de progresser comme n'importe quel autre muscle.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-5" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="c-5" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Crunch S1',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-5" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-5" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="c-5" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Crunch S2',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-5" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="c-5" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="15" data-ex="c-5" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Crunch S3',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-5" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🔺</div><div class="ex-info"><div class="ex-name">Relevés de Jambes Suspendu <span class="bi">ISO</span></div><span class="ex-target">Poids du corps</span></div></div>
+    <div class="ex-note">Suspendu à la barre, épaules engagées — pas relâchées. Remonte les genoux vers la poitrine en contractant le bas du ventre, pas en balançant. Si tu es à l'aise avec les genoux, essaie les jambes tendues pour plus d'intensité. Descente lente et contrôlée — ne te balance pas. Cet exercice cible le bas des abdominaux, souvent négligé.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-6" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-6" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Relevés S1',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-6" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">15</div><input class="inp" type="number" placeholder="—" data-ex="c-6" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-6" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Relevés S2',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-6" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">12</div><input class="inp" type="number" placeholder="—" data-ex="c-6" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-6" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Relevés S3',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-6" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+    <div class="ex-card"><div class="ex-top"><div class="ex-img">🌀</div><div class="ex-info"><div class="ex-name">Planche — Gainage <span class="bi">ISO</span></div><span class="ex-target">Poids du corps</span></div></div>
+    <div class="ex-note">Avant-bras au sol, coudes sous les épaules. Corps parfaitement aligné de la tête aux talons — pas les fesses en l'air, pas le dos creux. Contracte les abdos ET les fessiers en même temps. Respire normalement — si tu bloques ta respiration tu tiens moins longtemps. Commence à 45s et progresse vers 60s puis 90s au fil des semaines.</div>
+    <div class="sets-table"><div class="sets-header"><span>#</span><span>Cible</span><span>Reps</span><span>Poids kg</span></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S1</div><div class="stv">45s</div><input class="inp" type="number" placeholder="—" data-ex="c-7" data-s="0" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-7" data-s="0" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Planche S1',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-7" data-s="0" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S2</div><div class="stv">45s</div><input class="inp" type="number" placeholder="—" data-ex="c-7" data-s="1" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-7" data-s="1" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Planche S2',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-7" data-s="1" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+      <div class="set-block"><div class="set-top"><div class="snum">S3</div><div class="stv">45s</div><input class="inp" type="number" placeholder="—" data-ex="c-7" data-s="2" data-t="reps"><input class="inp" type="number" placeholder="0" data-ex="c-7" data-s="2" data-t="kg"></div><div class="set-bottom"><button class="rest-btn" onclick="startRest(60,'Planche S3',this)">⏱ 1:00</button><select class="feel-sel" data-ex="c-7" data-s="2" data-t="feel"><option value="">😐 Ressenti</option><option value="f">😤 Facile</option><option value="o">💪 OK</option><option value="d">🔥 Dur</option><option value="m">💀 Max</option></select></div></div>
+    </div></div>
+  </div>
+  <button class="save-btn" onclick="saveSession('c')">💾 SAUVEGARDER SÉANCE C</button>
+  <div id="next-c" class="next-box" style="display:none"></div>
+  <button class="hist-toggle" onclick="toggleHist('c')">📋 Historique Séance C</button>
+  <div id="hist-c" class="hist-list"></div>
+  <button class="export-btn" onclick="exportData()">📤 Exporter mes données</button>
+  <button class="export-btn" style="color:#ffd166;border-color:rgba(255,209,102,0.3);margin-top:4px" onclick="reportSession('c')">📅 Reporter Séance C</button>
+</div>
+
+
+<!-- STATS -->
+<div id="stats" class="session">
+  <div style="padding:16px 0 10px;text-align:center">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--accent)">📈 MES STATS</div>
+    <div style="font-size:12px;color:var(--muted2);margin-top:3px">Progression · Records · Volume</div>
+    <button onclick="loadDemoData()" style="margin-top:10px;padding:6px 16px;border-radius:20px;border:1px solid rgba(199,125,255,0.4);background:rgba(199,125,255,0.08);color:#c77dff;font-size:11px;cursor:pointer">👀 Charger données démo</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-val" id="kpi-total">—</div><div class="kpi-lbl">Séances totales</div></div>
+    <div class="kpi-card"><div class="kpi-val" id="kpi-streak">—</div><div class="kpi-lbl">Séances ce mois</div></div>
+    <div class="kpi-card"><div class="kpi-val" id="kpi-bench">—</div><div class="kpi-lbl">Best Bench (kg)</div></div>
+    <div class="kpi-card"><div class="kpi-val" id="kpi-squat">—</div><div class="kpi-lbl">Best Squat (kg)</div></div>
+  </div>
+
+  <!-- Courbe progression -->
+  <div class="dash-section">
+    <div class="dash-title">📊 Progression poids</div>
+    <div class="dash-sub">Poids moyen par séance sur un exercice</div>
+    <select class="exsel" id="chart-ex" onchange="renderChart()">
+      <option value="a-0">Bench — Séance A Lourd</option>
+      <option value="b-0">Bench — Séance B Moyen</option>
+      <option value="c-0">Bench — Séance C Léger</option>
+      <option value="a-2">Squat — Séance A</option>
+      <option value="b-2">RDL — Séance B</option>
+      <option value="a-1">Pull Ups — Séance A</option>
+      <option value="a-3">Corde Triceps</option>
+      <option value="b-3">Curls EZ</option>
+      <option value="b-4">Cable Row</option>
+      <option value="c-3">Pec Deck Fly</option>
+    </select>
+    <div id="chart-wrap"></div>
+  </div>
+
+  <!-- Volume par séance -->
+  <div class="dash-section">
+    <div class="dash-title">💥 Volume total</div>
+    <div class="dash-sub">kg × reps cumulés — 8 dernières séances</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="vol-a" class="rest-btn" style="flex:none;padding:6px 12px" onclick="renderVolume('a')">🔴 A</button>
+      <button id="vol-b" class="rest-btn" style="flex:none;padding:6px 12px" onclick="renderVolume('b')">🟡 B</button>
+      <button id="vol-c" class="rest-btn" style="flex:none;padding:6px 12px" onclick="renderVolume('c')">🟢 C</button>
+    </div>
+    <div class="bar-wrap" id="vol-bars"><div style="color:var(--muted2);font-size:12px;width:100%;text-align:center">Pas encore de données</div></div>
+  </div>
+
+  <!-- Records perso -->
+  <div class="dash-section">
+    <div class="dash-title">🏆 Records personnels</div>
+    <div class="dash-sub">Meilleur poids atteint par exercice</div>
+    <div id="pr-table"><div style="color:var(--muted2);font-size:12px;text-align:center;padding:16px">Sauvegarde ta première séance pour voir tes records !</div></div>
+  </div>
+
+  <!-- Répartition ressentis -->
+  <div class="dash-section">
+    <div class="dash-title">😤 Ressentis globaux</div>
+    <div class="dash-sub">Répartition de tes ressentis sur toutes les séances</div>
+    <div id="feel-bars"></div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:8px">
+  <button class="export-btn" onclick="exportData()" style="flex:1">📤 Exporter</button>
+  <button class="export-btn" onclick="resetAll()" style="color:#ff4d6d;border-color:rgba(255,77,109,0.4)">🗑 Reset données</button>
+  <button class="export-btn" onclick="document.getElementById('import-input').click()" style="flex:1;color:#c77dff;border-color:rgba(199,125,255,0.3)">📥 Importer JSON</button>
+</div>
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+<div id="import-msg" style="display:none;margin-top:8px;padding:10px 12px;border-radius:10px;font-size:12px;text-align:center"></div>
+</div>
+
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(function(){});}
+
+// ================================================================
+// ARCHITECTURE 1RM — tous les poids calculés depuis des 1RM
+// ================================================================
+
+const EX={'a-0':'Bench Lourd','a-1':'Pull Ups Lestés','a-2':'Squat Lourd','a-3':'Corde Triceps','a-4':'Élév. Latérales','b-0':'Bench Moyen','b-1':'Pull Ups','b-2':'RDL','b-3':'Curls EZ','b-4':'Cable Row','c-0':'Bench Léger','c-1':'Pull Ups Max','c-2':'Squat Léger','c-3':'Corde Triceps','c-4':'Élév. Latérales','c-5':'Dips','c-6':'Traction neutre','c-7':'OHP'};
+
+// ── COMPOSÉS : poids varient par séance (A=85%, B=70%, C=60% du 1RM) ────────
+const EX_COMPOSE={
+  'a-0':['bench',0.85], 'b-0':['bench',0.70], 'c-0':['bench',0.60],
+  'a-1':['pullups',0.85],'b-1':['pullups',0.70],'c-1':['pullups',0.60],
+  'a-2':['squat',0.85],  'c-2':['squat',0.60],
+  'b-2':['rdl',0.60],
+};
+
+// ── ISOLATIONS : poids fixe (calculé une fois depuis le 1RM, stocké séparément)
+// Structure : id → [clé 1RM de référence, % initial pour calculer le poids de départ]
+const EX_ISO={
+  'a-3':['bench',0.35], // Corde Triceps → 80kg*0.35=28kg
+  'c-3':['bench',0.28], // Pec Deck Fly  → 80kg*0.28=22kg
+  'a-4':['bench',0.12], // Élév. Latérales→ 80kg*0.12=10kg (fixe A=B=C)
+  'c-4':['bench',0.12], // Élév. Latérales idem
+  'b-3':['bench',0.28], // Curls EZ      → 80kg*0.28=22kg
+  'b-4':['rdl',0.45],   // Cable Row     → 100kg*0.45=45kg
+  'c-5':['bench',0.18], // Crunch Cable  → 80kg*0.18=14kg
+};
+
+// ── PDC : poids du corps (lestage = 0 par défaut) ────────────────────────────
+const EX_PDC={'a-1':true,'b-1':true,'c-1':true,'c-6':true,'c-7':true};
+
+// Raccourcis compatibles avec le reste du code
+const EX_1RM=Object.assign(
+  {},
+  Object.fromEntries(Object.entries(EX_COMPOSE).map(([k,v])=>[k,v[0]])),
+  Object.fromEntries(Object.entries(EX_ISO).map(([k,v])=>[k,v[0]]))
+);
+const EX_PCT=Object.assign(
+  {},
+  Object.fromEntries(Object.entries(EX_COMPOSE).map(([k,v])=>[k,v[1]])),
+  Object.fromEntries(Object.entries(EX_ISO).map(([k,v])=>[k,v[1]]))
+);
+
+const PROXY_URL='https://warmode.leroikaour.workers.dev/';
+const CIRC=503;
+let rtimer=null,rrem=0,rtot=120,rpaused=false,abtn=null;
+
+// ── Utilitaires ──────────────────────────────────────────────────
+function round125(kg){return Math.round(kg/1.25)*1.25;}
+function epley(kg,reps){if(reps<=1)return kg;return Math.round(kg*(1+reps/30)*2)/2;}
+function showToast(msg,dur){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},dur||2800);}
+
+// ── 1RM storage ──────────────────────────────────────────────────
+function get1RM(){try{const d=localStorage.getItem('fbt_1rm');if(d)return JSON.parse(d);}catch(e){}return{};}
+function set1RM(obj){try{localStorage.setItem('fbt_1rm',JSON.stringify(obj));}catch(e){}}
+
+// Poids d'isolation stockés séparément — fixes entre A/B/C, mis à jour uniquement par l'IA
+function getISO(){try{const d=localStorage.getItem('fbt_iso');if(d)return JSON.parse(d);}catch(e){}return{};}
+function setISO(obj){try{localStorage.setItem('fbt_iso',JSON.stringify(obj));}catch(e){}}
+
+// Initialiser les poids d'isolation depuis le 1RM si pas encore définis
+function initISO(){
+  const rm=get1RM();
+  const iso=getISO();
+  let changed=false;
+  Object.entries(EX_ISO).forEach(function([id,cfg]){
+    if(iso[id]==null&&rm[cfg[0]]!=null){
+      iso[id]=round125(rm[cfg[0]]*cfg[1]);
+      changed=true;
+    }
+  });
+  if(changed)setISO(iso);
+}
+function weightFromRM(id){
+  if(EX_PDC[id])return 0;
+  // Isolation → poids fixe depuis fbt_iso
+  if(EX_ISO[id]){
+    const iso=getISO();
+    if(iso[id]!=null)return iso[id];
+    // Pas encore initialisé → calculer depuis 1RM
+    const rm=get1RM();
+    const cfg=EX_ISO[id];
+    if(rm[cfg[0]]==null)return null;
+    return round125(rm[cfg[0]]*cfg[1]);
+  }
+  // Composé → % du 1RM
+  const rm=get1RM();
+  const cfg=EX_COMPOSE[id];
+  if(!cfg||rm[cfg[0]]==null)return null;
+  return Math.max(1.25,round125(rm[cfg[0]]*cfg[1]));
+}
+
+// ── Historique ───────────────────────────────────────────────────
+const MEM={a:[],b:[],c:[]};
+function getH(s){try{const d=localStorage.getItem('fbt_'+s);if(d)return JSON.parse(d);}catch(e){}return MEM[s]||[];}
+function setH(s,h){MEM[s]=h;try{localStorage.setItem('fbt_'+s,JSON.stringify(h));}catch(e){}}
+
+// Recalculer tous les poids depuis les 1RM actuels
+function recalcFromRM(){
+  ['a','b','c'].forEach(function(sess){
+    const hist=getH(sess);
+    if(!hist.length)return;
+    if(!hist[0].prog)hist[0].prog={};
+    Object.keys(EX).filter(function(id){return id.startsWith(sess+'-');}).forEach(function(id){
+      // Ne pas recalculer les isolations depuis le 1RM — elles ont leur propre stockage
+      if(EX_ISO[id])return;
+      const w=weightFromRM(id);
+      if(w===null)return;
+      const nextKg=EX_PDC[id]?0:w;
+      if(!hist[0].prog[id])hist[0].prog[id]={avgKg:nextKg,nextKg:nextKg,dir:'same',note:''};
+      else hist[0].prog[id].nextKg=nextKg;
+    });
+    setH(sess,hist);
+  });
+}
+
+// ── Timer repos ──────────────────────────────────────────────────
+function fmt(s){const m=Math.floor(s/60),sc=s%60;return m+':'+(sc<10?'0':'')+sc;}
+function setDur(s,btn){document.querySelectorAll('.dbtn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');rtot=s;}
+function startRest(dur,lbl,btn){
+  clearInterval(rtimer);if(abtn){abtn.classList.remove('active');abtn.classList.add('done');}
+  abtn=btn;rrem=dur;rpaused=false;
+  document.getElementById('rmod').style.display='flex';
+  document.getElementById('rlbl').textContent=lbl;
+  updDisp();rtimer=setInterval(tick,1000);
+}
+function tick(){if(rpaused)return;rrem--;if(abtn)abtn.textContent=fmt(rrem);updDisp();if(rrem<=0){clearInterval(rtimer);closeRest();}}
+function updDisp(){const p=document.getElementById('cp');if(!p)return;const pct=rrem/rtot;p.style.strokeDashoffset=CIRC*(1-pct);document.getElementById('ct').textContent=fmt(rrem);document.getElementById('pbtn').textContent=rpaused?'▶':'⏸';}
+function togglePause(){rpaused=!rpaused;document.getElementById('pbtn').textContent=rpaused?'▶':'⏸';}
+function closeRest(){clearInterval(rtimer);if(abtn){abtn.classList.add('done');abtn=null;}document.getElementById('rmod').style.display='none';}
+
+// ── Navigation ───────────────────────────────────────────────────
+function showTab(name){
+  document.querySelectorAll('.session').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.className='tab';});
+  document.getElementById(name).classList.add('active');
+  const tabEl=document.getElementById('tab-'+name);
+  const cls={sc:'act-c',sa:'act-a',sb:'act-b',stats:'act-s'};
+  if(tabEl&&cls[name])tabEl.classList.add(cls[name]);
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(name==='stats')renderDash();
+  else{const sess=name==='sc'?'c':name==='sa'?'a':name==='sb'?'b':null;if(sess)prefill(sess);}
+}
+
+// ── Prefill depuis 1RM ───────────────────────────────────────────
+function prefill(sess){
+  const section=document.getElementById('s'+sess)||document;
+  const rm=get1RM();
+  const hist=getH(sess);
+  const histProg=hist.length?hist[0].prog||{}:{};
+  const ids=Object.keys(EX).filter(function(k){return k.startsWith(sess+'-');});
+  ids.forEach(function(id){
+    const isPDC=EX_PDC[id];
+    let targetKg=null;
+    if(Object.keys(rm).length){targetKg=isPDC?0:weightFromRM(id);}
+    if(histProg[id]&&histProg[id].nextKg!=null)targetKg=histProg[id].nextKg;
+    if(targetKg===null)return;
+    let s=0;
+    while(true){
+      const k=section.querySelector('[data-ex="'+id+'"][data-s="'+s+'"][data-t="kg"]');
+      if(!k)break;
+      if(EX_PDC[id]){k.value=0;}else if(!k.value)k.value=targetKg;
+      s++;
+    }
+  });
+}
+
+// ── Lecture séance ───────────────────────────────────────────────
+function readSess(sess){
+  const section=document.getElementById('s'+sess)||document;
+  const ids=Object.keys(EX).filter(function(k){return k.startsWith(sess+'-');});
+  const r={};
+  ids.forEach(function(id){
+    const sets=[];let s=0;
+    while(true){
+      const re=section.querySelector('[data-ex="'+id+'"][data-s="'+s+'"][data-t="reps"]');if(!re)break;
+      const ke=section.querySelector('[data-ex="'+id+'"][data-s="'+s+'"][data-t="kg"]');
+      const fe=section.querySelector('[data-ex="'+id+'"][data-s="'+s+'"][data-t="feel"]');
+      const isPDC=EX_PDC[id];
+      const rawVal=ke.value!==''?ke.value:ke.placeholder;
+      const kgVal=(rawVal&&rawVal!=='-')?parseFloat(rawVal):null;
+      const kgFinal=isPDC?(kgVal!==null?kgVal:0):(kgVal&&kgVal>0?kgVal:null);
+      sets.push({reps:re.value?parseInt(re.value):null,kg:kgFinal,pdc:isPDC,feel:fe?fe.value:''});
+      s++;
+    }
+    r[id]=sets;
+  });
+  return r;
+}
+
+// ── Affichage recos ──────────────────────────────────────────────
+function renderNext(sess,prog,bilan){
+  const box=document.getElementById('next-'+sess);
+  if(!box)return;
+  let html='<div class="ntitle">Prochaine Séance</div>';
+  if(bilan){html+='<div style="font-size:12px;color:#c77dff;background:rgba(199,125,255,0.08);border:1px solid rgba(199,125,255,0.2);border-radius:8px;padding:10px;margin-bottom:10px;line-height:1.5">'+bilan+'</div>';}
+  Object.keys(prog).forEach(function(id){
+    const r=prog[id];if(!r||r.nextKg==null)return;
+    const cls=r.dir==='up'?'up':r.dir==='down'?'down':'same';
+    const arrow=r.dir==='up'?' ↑':r.dir==='down'?' ↓':'';
+    const isPDC=EX_PDC[id];
+    function fmtKg(kg){if(isPDC){if(kg>0)return'PDC+'+kg+'kg';if(kg<0)return'PDC'+kg+'kg';return'PDC';}return kg+'kg';}
+    html+='<div class="nrow"><div class="nname">'+EX[id]+'</div>'
+         +'<div class="nprog"><span class="nold">'+fmtKg(r.avgKg||r.nextKg)+'</span>'
+         +'<span style="color:var(--muted);font-size:10px;margin:0 4px">>>></span>'
+         +'<span class="nnew '+cls+'">'+fmtKg(r.nextKg)+arrow+'</span></div></div>';
+    if(r.note)html+='<div class="nnote">'+r.note+'</div>';
+  });
+  box.innerHTML=html;box.style.display='block';
+}
+
+// ── Sauvegarde ───────────────────────────────────────────────────
+async function saveSession(sess){
+  const data=readSess(sess);
+  const date=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.querySelectorAll('[data-ex^="'+sess+'-"]').forEach(function(el){if(el.value||el.selectedIndex>0)el.classList.add('done');});
+
+  // Calcul local immédiat
+  const prog={};
+  Object.keys(data).forEach(function(id){
+    const sets=data[id].filter(function(s){return s.kg!==null&&(s.pdc||s.kg>0);});
+    if(!sets.length)return;
+    const avgKg=Math.round(sets.reduce(function(a,b){return a+b.kg;},0)/sets.length*10)/10;
+    const nextKg=weightFromRM(id)!==null?weightFromRM(id):avgKg;
+    prog[id]={avgKg,nextKg,dir:nextKg>avgKg?'up':nextKg<avgKg?'down':'same',note:''};
+  });
+
+  const hist=getH(sess);
+  hist.unshift({date,ts:Date.now(),data,prog});
+  if(hist.length>60)hist.pop();
+  setH(sess,hist);
+  renderNext(sess,prog);
+  renderHist(sess);
+  showToast('✅ Séance sauvegardée — Analyse en cours...');
+
+  // Appel IA
+  try{
+    const prevHist=getH(sess).slice(1,4);
+    const sessLabel={a:'LOURD (85%)',b:'MOYEN (70%)',c:'LEGER (60%)'}[sess]||sess;
+    const rm=get1RM();
+    const rmLines=Object.entries(rm).map(function(e){return e[0]+': '+e[1]+'kg';}).join(', ')||'Non définis';
+    const FEEL_LABELS={f:'facile',o:'ok',d:'dur',m:'max'};
+
+    const exLines=[];
+    Object.entries(data).forEach(function(entry){
+      const id=entry[0],sets=entry[1];
+      const filled=sets.filter(function(s){return s.kg!==null&&(s.pdc||s.kg>0);});
+      if(!filled.length)return;
+      const rmKey=EX_1RM[id];
+      const curRM=rm[rmKey]?rm[rmKey]+'kg':' ?';
+      const section=document.getElementById('s'+sess)||document;
+      const svEls=section.querySelectorAll('[data-ex="'+id+'"][data-s][data-t="reps"]');
+      const targets=Array.from(svEls).map(function(inp){const sv=inp.parentElement&&inp.parentElement.querySelector('.sv');return sv?sv.textContent.trim():'?';});
+      const setParts=[];
+      for(let i=0;i<filled.length;i++){
+        const s=filled[i];
+        const kgDisp=s.pdc?(s.kg>0?'PDC+'+s.kg+'kg':s.kg<0?'PDC'+s.kg+'kg':'PDC'):s.kg+'kg';
+        let line='S'+(i+1)+' [cible:'+(targets[i]||'?')+'reps] -> '+(s.reps||'?')+'reps x '+kgDisp;
+        if(s.feel&&FEEL_LABELS[s.feel])line+=' ('+FEEL_LABELS[s.feel]+')';
+        // Estimer 1RM depuis cette série
+        if(s.reps&&s.reps>0&&s.kg!==null){
+          const est=epley(Math.abs(s.kg),s.reps);
+          if(!s.pdc||s.kg>=0)line+=' [1RM estimé: '+est+'kg]';
+        }
+        setParts.push(line);
+      }
+      exLines.push('* '+EX[id]+' (1RM réf: '+curRM+')\n    '+setParts.join(' | '));
+    });
+    if(!exLines.length)return;
+
+    const objGlobal=(document.querySelector('.obj-val')||{}).textContent||'Non défini';
+    const objSeance=(document.querySelector('#s'+sess+' .tip')||{}).textContent||'Non défini';
+
+    const isoLines=Object.keys(EX_ISO).filter(function(id){return id.startsWith(sess+'-');}).map(function(id){
+      const iso=getISO();
+      return '* '+EX[id]+' (isolation, poids actuel: '+(iso[id]!=null?iso[id]+'kg':'non init')+')';
+    }).join('\n');
+    const prompt='Tu es coach de force. Analyse cette séance.\n\nPROFIL:\n- Objectif: '+objGlobal+'\n- Seance '+sessLabel+': '+objSeance+'\n- 1RM actuels: '+rmLines+'\n\nSEANCE '+sessLabel+' - '+date+':\n'+exLines.join('\n')+'\n\nEXERCICES D\'ISOLATION (poids fixe entre les séances):\n'+isoLines+'\n\nARCHITECTURE:\n- COMPOSÉS (bench, squat, pullups, ohp, rdl): poids = % du 1RM. Séance A=85%, B=70%, C=60%.\n  → Si tu changes le 1RM, les poids de TOUTES les séances se recalculent auto.\n- ISOLATIONS (curls, élévations, corde triceps, cable row, crunch cable): poids FIXE entre les séances.\n  → Tu ne touches au poids d\'isolation QUE si l\'athlète le trouve trop facile sur plusieurs séances.\n  → Ne change PAS le 1RM du composé lié pour ajuster une isolation.\n\nCONSIGNE: Réponds UNIQUEMENT en JSON strict:\n{\n  "1rm_updates": [\n    {"key": "bench", "new_1rm": 90, "dir": "up", "note": "6x5 a 75kg -> 1RM estimé 90kg"}\n  ],\n  "iso_updates": [\n    {"id": "a-3", "new_kg": 30, "dir": "up", "note": "Corde triceps trop facile, +2.5kg"}\n  ],\n  "bilan": "2-3 phrases coaching direct."\n}\n\nClés 1RM valides: bench, squat, pullups, ohp, rdl\nRègles:\n- Base-toi sur la formule Epley fournie pour estimer le 1RM\n- Augmente le 1RM si perfs > cibles, maintiens si dans les cibles\n- Pour les isolations: augmente SEULEMENT si ressenti = Facile sur 2+ séries\n- new_1rm et new_kg = multiples de 2.5';
+
+    const resp=await fetch(PROXY_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,module:'tracker'})});
+    const json=await resp.json();
+    if(json.error)throw new Error(json.error);
+    let raw=json.content||'';
+    raw=raw.replace(/```json|```/g,'').trim();
+    const result=JSON.parse(raw);
+
+    // Mettre à jour les 1RM (composés)
+    const newRM=get1RM();
+    (result['1rm_updates']||[]).forEach(function(u){
+      if(u.key&&u.new_1rm)newRM[u.key]=Math.round(u.new_1rm/2.5)*2.5;
+    });
+    set1RM(newRM);
+    recalcFromRM(); // Recalcule composés uniquement
+
+    // Mettre à jour les isolations séparément
+    const newISO=getISO();
+    (result['iso_updates']||[]).forEach(function(u){
+      if(u.id&&u.new_kg)newISO[u.id]=Math.round(u.new_kg/1.25)*1.25;
+    });
+    setISO(newISO);
+
+    // Construire updatedProg pour affichage
+    const updatedProg={};
+    // Composés
+    (result['1rm_updates']||[]).forEach(function(u){
+      Object.keys(EX).filter(function(id){return EX_COMPOSE[id]&&EX_COMPOSE[id][0]===u.key&&id.startsWith(sess+'-');}).forEach(function(id){
+        const w=weightFromRM(id);
+        updatedProg[id]={avgKg:prog[id]?prog[id].avgKg:w,nextKg:w!==null?w:0,dir:u.dir||'same',note:u.note,ia:true};
+      });
+    });
+    // Isolations
+    (result['iso_updates']||[]).forEach(function(u){
+      if(u.id&&u.id.startsWith(sess+'-')){
+        const w=newISO[u.id];
+        updatedProg[u.id]={avgKg:prog[u.id]?prog[u.id].avgKg:w,nextKg:w,dir:u.dir||'up',note:u.note,ia:true};
+      }
+    });
+
+    // Sauvegarder le bilan
+    const h=getH(sess);
+    if(h.length&&h[0].ts===hist[0].ts){h[0].prog=Object.assign({},h[0].prog,updatedProg);h[0].bilan=result.bilan||'';setH(sess,h);}
+
+    renderNext(sess,Object.keys(updatedProg).length?updatedProg:prog,result.bilan);
+    showToast('Analyse terminée !');
+
+  }catch(err){
+    console.warn('IA fallback:',err.message);
+    showToast('Sauvegardé (sans analyse IA)');
+  }
+}
+
+// ── Historique ───────────────────────────────────────────────────
+function renderHist(sess){
+  const hist=getH(sess);
+  const el=document.getElementById('hist-'+sess);
+  if(!el)return;
+  if(!hist.length){el.innerHTML='<div class="hentry">Aucune seance enregistrée.</div>';return;}
+  el.innerHTML=hist.map(function(e){
+    const lines=Object.keys(e.data||{}).map(function(id){
+      const sets=(e.data[id]||[]).filter(function(s){return s.reps||s.kg;});if(!sets.length)return'';
+      return '<div>'+EX[id]+': '+sets.map(function(s,i){return'S'+(i+1)+':'+(s.reps||'?')+'x'+(s.kg||'PDC')+'kg';}).join(' ')+'</div>';
+    }).join('');
+    return '<div class="hentry"><strong>'+e.date+'</strong>'+(e.bilan?'<div style="color:#c77dff;font-size:11px;margin-top:4px">'+e.bilan+'</div>':'')+lines+'</div>';
+  }).join('');
+}
+function toggleHist(sess){const el=document.getElementById('hist-'+sess);if(!el)return;el.style.display=el.style.display==='block'?'none':'block';if(el.style.display==='block')renderHist(sess);}
+function reportSession(sess){
+  const msgs={a:'Vendredi — Séance C Léger',b:'Lundi — Séance A Lourd',c:'Mercredi — Séance B Moyen'};
+  showToast('Prochaine: '+( msgs[sess]||'?'));
+}
+
+// ── Export / Import ──────────────────────────────────────────────
+function resetAll(){
+  if(!confirm('Supprimer TOUTES les données ? (historique + 1RM)'))return;
+  ['a','b','c'].forEach(function(s){
+    localStorage.removeItem('fbt_'+s);
+    localStorage.removeItem('fbt_next_'+s);
+    MEM[s]=[];
+  });
+  localStorage.removeItem('fbt_1rm');
+  showToast('Données effacées !');
+  setTimeout(function(){location.reload();},1000);
+}
+
+function exportData(){
+  const d={a:getH('a'),b:getH('b'),c:getH('c'),'1rm':get1RM()};
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tracker_data.json';a.click();
+}
+function importData(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.a)setH('a',d.a);if(d.b)setH('b',d.b);if(d.c)setH('c',d.c);
+      if(d['1rm'])set1RM(d['1rm']);
+      showToast('Import OK');location.reload();
+    }catch(err){showToast('Erreur import: '+err.message);}
+  };
+  reader.readAsText(file);
+}
+function showMsg(txt,color){const el=document.getElementById('msg');if(!el)return;el.textContent=txt;el.style.color=color||'#7bed9f';setTimeout(function(){el.textContent='';},3000);}
+
+// ── Modal setup 1RM ─────────────────────────────────────────────
+function checkFirstUse(){
+  if(Object.keys(get1RM()).length===0){
+    const m=document.getElementById('setup-modal');
+    if(m)m.style.display='flex';
+  } else {
+    // 1RM déjà définis → s'assurer que les isolations sont initialisées
+    initISO();
+  }
+}
+function saveSetup(){
+  const fields=['bench','squat','pullups','ohp','rdl'];
+  const rm={};let filled=0;
+  fields.forEach(function(k){
+    const el=document.getElementById('setup-'+k);
+    if(el&&el.value){rm[k]=Math.round(parseFloat(el.value)/2.5)*2.5;filled++;}
+  });
+  if(!filled){showToast('Entre au moins un 1RM !');return;}
+  set1RM(rm);
+  document.getElementById('setup-modal').style.display='none';
+  recalcFromRM();
+  ['a','b','c'].forEach(prefill);
+  showToast('1RM enregistrés !');
+}
+function skipSetup(){
+  const m=document.getElementById('setup-modal');
+  if(m)m.style.display='none';
+}
+window.addEventListener('load',function(){checkFirstUse();});
+
+function renderDash(){
+  const all={a:getH('a'),b:getH('b'),c:getH('c')};
+  const total=all.a.length+all.b.length+all.c.length;
+  document.getElementById('kpi-total').textContent=total||'0';
+
+  // Séances ce mois
+  const now=new Date();
+  const thisMonth=all.a.concat(all.b,all.c).filter(e=>{
+    if(!e.ts)return false;
+    const d=new Date(e.ts);
+    return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  }).length;
+  document.getElementById('kpi-streak').textContent=thisMonth||'0';
+
+  // Best Bench et Squat
+  const bestKg=(sess,id)=>{let b=0;getH(sess).forEach(e=>{(e.data?.[id]||[]).forEach(s=>{if(s.kg)b=Math.max(b,s.kg);});});return b||null;};
+  const bb=bestKg('a','a-0'),bs=bestKg('a','a-2');
+  document.getElementById('kpi-bench').innerHTML=bb?(bb+'<span style="font-size:13px;color:var(--muted2)">kg</span>'):'—';
+  document.getElementById('kpi-squat').innerHTML=bs?(bs+'<span style="font-size:13px;color:var(--muted2)">kg</span>'):'—';
+
+  renderChart();
+  renderVolume('a');
+  renderPR();
+  renderFeels();
+}
+
+function renderChart(){
+  const id=document.getElementById('chart-ex').value;
+  const sess=id[0];
+  const hist=getH(sess).slice().reverse();
+  const pts=hist.map(e=>{
+    const sets=(e.data?.[id]||[]).filter(s=>s.kg&&s.reps);
+    if(!sets.length)return null;
+    const avg=sets.reduce((a,b)=>a+b.kg,0)/sets.length;
+    return{lbl:e.date?e.date.split(' ').slice(0,2).join(' '):'',kg:Math.round(avg*10)/10};
+  }).filter(Boolean);
+
+  const wrap=document.getElementById('chart-wrap');
+  if(pts.length<2){
+    wrap.innerHTML='<div style="color:var(--muted2);font-size:12px;text-align:center;padding:20px">'+(pts.length===1?'1 séance : <strong>'+pts[0].kg+'kg</strong> — Continue !':'Pas encore de données.')+'</div>';
+    return;
+  }
+
+  const W=300,H=110,P={t:20,r:10,b:28,l:36};
+  const kgs=pts.map(p=>p.kg);
+  const minK=Math.min(...kgs)*0.93,maxK=Math.max(...kgs)*1.07;
+  const colors={'a':'#ff4d6d','b':'#ffd166','c':'#7bed9f'};
+  const color=colors[sess]||'#c77dff';
+  const xS=i=>P.l+(i/(pts.length-1))*(W-P.l-P.r);
+  const yS=v=>P.t+(1-(v-minK)/(maxK-minK))*(H-P.t-P.b);
+  const path=pts.map((p,i)=>(i===0?'M':'L')+xS(i).toFixed(1)+','+yS(p.kg).toFixed(1)).join(' ');
+  const area=path+' L'+xS(pts.length-1).toFixed(1)+','+(H-P.b)+' L'+xS(0).toFixed(1)+','+(H-P.b)+' Z';
+  const dots=pts.map((p,i)=>'<circle cx="'+xS(i).toFixed(1)+'" cy="'+yS(p.kg).toFixed(1)+'" r="4" fill="'+color+'"/>').join('');
+  const labels=pts.filter((_,i)=>i===0||i===pts.length-1||pts.length<=5).map((p,_,arr)=>{
+    const i=pts.indexOf(p);
+    return'<text style="font-size:8px;fill:var(--muted)" x="'+xS(i).toFixed(1)+'" y="'+(H-4)+'" text-anchor="middle">'+p.lbl+'</text>';
+  }).join('');
+  const yLabels=[minK,maxK].map(v=>'<text style="font-size:9px;fill:var(--muted2)" x="'+P.l+'" y="'+yS(v).toFixed(1)+'" text-anchor="end" dominant-baseline="middle">'+Math.round(v)+'</text>').join('');
+  const trend=pts[pts.length-1].kg-pts[0].kg;
+  const trendHtml='<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;color:var(--muted2)">'+pts.length+' séances</span><span class="'+(trend>0?'trend-up':trend<0?'trend-down':'trend-same')+'">'+(trend>0?'↑+':trend<0?'↓':'')+trend.toFixed(1)+'kg</span></div>';
+  wrap.innerHTML=trendHtml+'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;overflow:visible"><defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+color+'" stop-opacity="0.3"/><stop offset="100%" stop-color="'+color+'" stop-opacity="0"/></linearGradient></defs><path d="'+area+'" fill="url(#grad)"/><path d="'+path+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linecap="round"/>'+ dots+labels+yLabels+'</svg>';
+}
+
+function renderVolume(sess){
+  ['a','b','c'].forEach(s=>{
+    const btn=document.getElementById('vol-'+s);
+    if(btn)btn.style.background=s===sess?'rgba(255,255,255,0.1)':'rgba(255,255,255,0.03)';
+  });
+  const hist=getH(sess).slice(0,8).reverse();
+  const wrap=document.getElementById('vol-bars');
+  if(!hist.length){wrap.innerHTML='<div style="color:var(--muted2);font-size:12px;width:100%;text-align:center">Pas encore de données</div>';return;}
+  const vols=hist.map(e=>{
+    let v=0;
+    Object.values(e.data||{}).forEach(sets=>{sets.forEach(s=>{if(s.kg&&s.reps)v+=s.kg*s.reps;});});
+    return{lbl:e.date?e.date.split(' ').slice(0,2).join(' '):'',vol:Math.round(v)};
+  });
+  const maxV=Math.max(...vols.map(v=>v.vol))||1;
+  const colors={'a':'#ff4d6d','b':'#ffd166','c':'#7bed9f'};
+  const color=colors[sess]||'#c77dff';
+  wrap.innerHTML=vols.map(v=>'<div class="bar-col"><div class="bval">'+Math.round(v.vol/1000*10)/10+'k</div><div class="bar" style="height:'+Math.round((v.vol/maxV)*80)+'px;background:'+color+'"></div><div class="blbl">'+v.lbl+'</div></div>').join('');
+}
+
+function renderPR(){
+  const allEx=Object.keys(EX);
+  let html='';
+  allEx.forEach(id=>{
+    const sess=id[0];
+    let best=0,bestDate='';
+    getH(sess).forEach(e=>{
+      (e.data?.[id]||[]).forEach(s=>{
+        if(s.kg&&s.kg>best){best=s.kg;bestDate=e.date?e.date.split(' ').slice(0,2).join(' '):'';};
+      });
+    });
+    if(!best)return;
+    html+='<div class="pr-row"><div class="pr-name">'+EX[id]+'<span style="font-size:10px;color:var(--muted);margin-left:6px">'+bestDate+'</span></div><div class="pr-val">'+best+'<span style="font-size:12px;color:var(--muted2)">kg</span></div></div>';
+  });
+  document.getElementById('pr-table').innerHTML=html||'<div style="color:var(--muted2);font-size:12px;text-align:center;padding:16px">Aucune donnée</div>';
+}
+
+function renderFeels(){
+  const counts={f:0,o:0,d:0,m:0};
+  ['a','b','c'].forEach(sess=>{
+    getH(sess).forEach(e=>{
+      Object.values(e.data||{}).forEach(sets=>{
+        sets.forEach(s=>{if(s.feel&&counts[s.feel]!==undefined)counts[s.feel]++;});
+      });
+    });
+  });
+  const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
+  const labels={f:'😤 Facile',o:'💪 OK',d:'🔥 Dur',m:'💀 Max'};
+  const colors={f:'#7bed9f',o:'#4cc9f0',d:'#ffd166',m:'#ff4d6d'};
+  const html=Object.keys(counts).map(k=>{
+    const pct=Math.round(counts[k]/total*100);
+    return'<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px">'+labels[k]+'</span><span style="font-family:Bebas Neue,sans-serif;font-size:14px;color:'+colors[k]+'">'+pct+'%</span></div><div style="height:8px;background:var(--border2);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+colors[k]+';border-radius:4px;transition:width .5s"></div></div></div>';
+  }).join('');
+  document.getElementById('feel-bars').innerHTML=html||'<div style="color:var(--muted2);font-size:12px;text-align:center;padding:16px">Aucune donnée</div>';
+}
+
+
+function importData(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const d=JSON.parse(e.target.result);
+      let count=0;
+      ['a','b','c'].forEach(sess=>{
+        if(d[sess]&&Array.isArray(d[sess])&&d[sess].length){
+          MEM[sess]=d[sess];
+          try{localStorage.setItem('fb5_'+sess,JSON.stringify(d[sess]));}catch(err){}
+          count+=d[sess].length;
+        }
+      });
+      const msg=document.getElementById('import-msg');
+      msg.style.display='block';
+      msg.style.background='rgba(123,237,159,0.1)';
+      msg.style.border='1px solid rgba(123,237,159,0.3)';
+      msg.style.color='#7bed9f';
+      msg.textContent='✅ '+count+' séances importées avec succès !';
+      setTimeout(()=>{msg.style.display='none';},3000);
+      renderDash();
+    }catch(err){
+      const msg=document.getElementById('import-msg');
+      msg.style.display='block';
+      msg.style.background='rgba(255,77,109,0.1)';
+      msg.style.border='1px solid rgba(255,77,109,0.3)';
+      msg.style.color='#ff4d6d';
+      msg.textContent="Fichier invalide. Vérifie que c'est bien un export Full Body Tracker.";
+    }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+// Données fictives pour prévisualisation stats
+function loadDemoData(){
+  const now=Date.now();
+  const day=86400000;
+  // Génère 8 séances A, 8 B, 8 C sur 8 semaines
+  const demoA=[];
+  const demoB=[];
+  const demoC=[];
+  const benchA=[60,62.5,62.5,65,65,67.5,67.5,70];
+  const squatA=[55,55,57.5,57.5,60,60,62.5,62.5];
+  const pullA=[5,5,6,6,7.5,7.5,8,10];
+  const benchB=[45,47,47,50,50,52,52,55];
+  const rdlB=[60,60,62.5,65,65,67.5,70,70];
+  const benchC=[37.5,40,40,42.5,42.5,45,45,47.5];
+  const feels=['o','o','f','o','d','o','f','o'];
+
+  for(let i=0;i<8;i++){
+    const ts=now-(7-i)*7*day;
+    const dateStr=new Date(ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    demoA.push({date:dateStr,ts,
+      data:{'a-0':[{reps:5,kg:benchA[i],feel:feels[i]},{reps:4,kg:benchA[i],feel:feels[i]},{reps:3,kg:benchA[i],feel:feels[i]}],
+            'a-1':[{reps:5,kg:pullA[i],feel:feels[i]},{reps:4,kg:pullA[i],feel:'o'},{reps:4,kg:pullA[i],feel:'o'}],
+            'a-2':[{reps:5,kg:squatA[i],feel:feels[i]},{reps:4,kg:squatA[i],feel:'o'},{reps:3,kg:squatA[i],feel:'d'}],
+            'a-3':[{reps:10,kg:17.5,feel:'o'},{reps:10,kg:17.5,feel:'o'},{reps:8,kg:17.5,feel:'d'}],
+            'a-4':[{reps:12,kg:7,feel:'o'},{reps:12,kg:7,feel:'f'},{reps:10,kg:7,feel:'o'}]},
+      prog:{'a-0':{avgKg:benchA[i],nextKg:benchA[Math.min(i+1,7)],dir:i<7?'up':'same',note:'😤 Trop facile → +2.5kg !'},
+            'a-2':{avgKg:squatA[i],nextKg:squatA[Math.min(i+1,7)],dir:i<7?'up':'same',note:'💪 Continue'},
+            'a-1':{avgKg:pullA[i],nextKg:pullA[Math.min(i+1,7)],dir:'up',note:'😤 Trop facile'}}});
+    demoB.push({date:dateStr,ts:ts+2*day,
+      data:{'b-0':[{reps:10,kg:benchB[i],feel:'o'},{reps:10,kg:benchB[i],feel:'o'},{reps:8,kg:benchB[i],feel:'d'}],
+            'b-1':[{reps:8,kg:0,feel:'o'},{reps:7,kg:0,feel:'d'},{reps:6,kg:0,feel:'d'}],
+            'b-2':[{reps:10,kg:rdlB[i],feel:'o'},{reps:10,kg:rdlB[i],feel:'o'},{reps:8,kg:rdlB[i],feel:'d'}],
+            'b-3':[{reps:12,kg:27.5,feel:'o'},{reps:10,kg:27.5,feel:'d'},{reps:10,kg:27.5,feel:'d'}],
+            'b-4':[{reps:12,kg:37.5,feel:'o'},{reps:12,kg:37.5,feel:'o'},{reps:10,kg:37.5,feel:'f'}]},
+      prog:{}});
+    demoC.push({date:dateStr,ts:ts+4*day,
+      data:{'c-0':[{reps:15,kg:benchC[i],feel:'f'},{reps:15,kg:benchC[i],feel:'f'},{reps:12,kg:benchC[i],feel:'o'}],
+            'c-1':[{reps:12,kg:0,feel:'o'},{reps:10,kg:0,feel:'d'},{reps:9,kg:0,feel:'d'}],
+            'c-2':[{reps:15,kg:37.5,feel:'f'},{reps:15,kg:37.5,feel:'o'},{reps:12,kg:37.5,feel:'o'}],
+            'c-3':[{reps:15,kg:17.5,feel:'o'},{reps:15,kg:17.5,feel:'f'},{reps:12,kg:17.5,feel:'o'}],
+            'c-4':[{reps:20,kg:7,feel:'f'},{reps:15,kg:7,feel:'o'},{reps:15,kg:7,feel:'o'}],
+            'c-5':[{reps:15,kg:15,feel:'o'},{reps:15,kg:15,feel:'d'},{reps:12,kg:15,feel:'d'}],
+            'c-6':[{reps:15,kg:0,feel:'o'},{reps:15,kg:0,feel:'o'},{reps:12,kg:0,feel:'d'}],
+            'c-7':[{reps:45,kg:0,feel:'o'},{reps:45,kg:0,feel:'o'},{reps:45,kg:0,feel:'d'}]},
+      prog:{}});
+  }
+  MEM.a=demoA;MEM.b=demoB;MEM.c=demoC;
+  try{localStorage.setItem('fb5_a',JSON.stringify(demoA));localStorage.setItem('fb5_b',JSON.stringify(demoB));localStorage.setItem('fb5_c',JSON.stringify(demoC));}catch(e){}
+  renderDash();
+  const msg=document.getElementById('import-msg');
+  msg.style.display='block';
+  msg.style.background='rgba(199,125,255,0.1)';
+  msg.style.border='1px solid rgba(199,125,255,0.3)';
+  msg.style.color='#c77dff';
+  msg.textContent='👀 Mode démo actif — 8 semaines de données fictives chargées';
+}
+
+</script>
+
+<div id="setup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#13131f;border:1px solid #252538;border-radius:16px;padding:28px;max-width:400px;width:90%;text-align:center">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#ff4d6d;letter-spacing:2px;margin-bottom:8px">PREMIÈRE UTILISATION</div>
+    <div style="font-size:13px;color:#8888aa;margin-bottom:20px;line-height:1.5">Entre tes 1RM approximatifs.<br>Si tu ne sais pas, fais une estimation basse — l'IA les affinera au fil des séances.</div>
+    <div style="display:grid;gap:10px;text-align:left">
+      <label style="font-size:12px;color:#e8e8f2">Bench Press (kg) <input id="setup-bench" type="number" placeholder="ex: 80" style="width:100%;margin-top:4px;padding:8px;background:#0f0f1a;border:1px solid #252538;border-radius:8px;color:#e8e8f2;font-size:14px"></label>
+      <label style="font-size:12px;color:#e8e8f2">Squat (kg) <input id="setup-squat" type="number" placeholder="ex: 100" style="width:100%;margin-top:4px;padding:8px;background:#0f0f1a;border:1px solid #252538;border-radius:8px;color:#e8e8f2;font-size:14px"></label>
+      <label style="font-size:12px;color:#e8e8f2">Pull Ups — lestage max (kg, 0=PDC) <input id="setup-pullups" type="number" placeholder="ex: 20" style="width:100%;margin-top:4px;padding:8px;background:#0f0f1a;border:1px solid #252538;border-radius:8px;color:#e8e8f2;font-size:14px"></label>
+      <label style="font-size:12px;color:#e8e8f2">OHP / Press militaire (kg) <input id="setup-ohp" type="number" placeholder="ex: 60" style="width:100%;margin-top:4px;padding:8px;background:#0f0f1a;border:1px solid #252538;border-radius:8px;color:#e8e8f2;font-size:14px"></label>
+      <label style="font-size:12px;color:#e8e8f2">RDL / Soulevé de terre roumain (kg) <input id="setup-rdl" type="number" placeholder="ex: 80" style="width:100%;margin-top:4px;padding:8px;background:#0f0f1a;border:1px solid #252538;border-radius:8px;color:#e8e8f2;font-size:14px"></label>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="saveSetup()" style="flex:2;background:#ff4d6d;color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer">ENREGISTRER</button>
+      <button onclick="skipSetup()" style="flex:1;background:transparent;border:1px solid #252538;color:#8888aa;border-radius:8px;padding:12px;font-size:13px;cursor:pointer">Plus tard</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
